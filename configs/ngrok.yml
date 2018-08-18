@@ -1,0 +1,5 @@
+authtoken: <your_token>
+tunnels:
+   secure:
+      proto: http
+      addr: 5051
