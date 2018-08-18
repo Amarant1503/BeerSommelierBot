@@ -28,6 +28,7 @@ namespace BeerSommelierBot
 
             services.Configure<TelegramOptions>(Configuration.GetSection("Telegram"));
             services.Configure<ProxyOptions>(Configuration.GetSection("Proxy"));
+            services.Configure<NgrokOptions>(Configuration.GetSection("Ngrok"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

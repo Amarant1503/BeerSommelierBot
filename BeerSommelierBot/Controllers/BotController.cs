@@ -1,4 +1,5 @@
 ﻿using BeerSommelierBot.Options;
+using BeerSommelierBot.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MihaZupan;
@@ -16,15 +17,17 @@ namespace BeerSommelierBot.Controllers
     {
         private TelegramOptions _tgOptions { get; }
         private ProxyOptions _proxyOptions { get; }
-        private TelegramBotClient client { get; }
+        private TelegramBotClient _client { get; }
+        private NgrokService _ngrokService { get; }
 
-        public BotController(IOptions<TelegramOptions> tgOptions, IOptions<ProxyOptions> proxyOptions)
+        public BotController(IOptions<TelegramOptions> tgOptions, IOptions<ProxyOptions> proxyOptions, IOptions<NgrokOptions> ngrokOptions)
         {
+            _ngrokService = new NgrokService(ngrokOptions.Value.LocalUrl);
             _tgOptions = tgOptions.Value;
             _proxyOptions = proxyOptions.Value;
             var proxy = new HttpToSocks5Proxy(_proxyOptions.Host, _proxyOptions.Port, _proxyOptions.User, _proxyOptions.Password);
             proxy.ResolveHostnamesLocally = true;
-            client = new TelegramBotClient(_tgOptions.Token, proxy);
+            _client = new TelegramBotClient(_tgOptions.Token, proxy);
         }
 
         // GET api/values
@@ -41,7 +44,7 @@ namespace BeerSommelierBot.Controllers
             var message = update.Message;
             if (message?.Type == MessageType.Text)
             {
-                await client.SendTextMessageAsync(message.Chat.Id, message.Text);
+                await _client.SendTextMessageAsync(message.Chat.Id, message.Text);
             }
         }
 
@@ -50,13 +53,15 @@ namespace BeerSommelierBot.Controllers
         {
             try
             {
-                await client.SetWebhookAsync($"{ _tgOptions.WebhookUrl}");
+                var tunnel = await _ngrokService.GetSecureTunnel();
+                await _client.SetWebhookAsync($"{tunnel.PublicUrl}/api/bot");
             }
             catch (Exception ex)
             {
-
+                throw new ApplicationException($"cannot establish Telegram webhook via Ngrok, error details: ", ex);
             }
-            var me = await client.GetMeAsync();
+
+            var me = await _client.GetMeAsync();
             return ($"Hello! My name is {me.FirstName}");
         }
 
