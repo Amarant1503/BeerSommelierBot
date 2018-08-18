@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using BeerSommelierBot.Options;
+﻿using BeerSommelierBot.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MihaZupan;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -48,7 +46,7 @@ namespace BeerSommelierBot.Controllers
         }
 
         [HttpGet("telegram")]
-        public async Task<string> TestApiAsync()
+        public async Task<string> SetWebhookAsync()
         {
             try
             {
@@ -60,6 +58,12 @@ namespace BeerSommelierBot.Controllers
             }
             var me = await client.GetMeAsync();
             return ($"Hello! My name is {me.FirstName}");
+        }
+
+        [HttpGet("healthcheck")]
+        public async Task<IActionResult> TestBotAvailabilityAsync()
+        {
+            return Ok("Success!");
         }
     }
 }
