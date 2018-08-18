@@ -30,13 +30,6 @@ namespace BeerSommelierBot.Controllers
             _client = new TelegramBotClient(_tgOptions.Token, proxy);
         }
 
-        // GET api/values
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
-
         [HttpPost]
         public async void Post([FromBody]Update update)
         {
@@ -48,13 +41,17 @@ namespace BeerSommelierBot.Controllers
             }
         }
 
+        /// <summary>
+        /// manual webhook set
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("telegram")]
         public async Task<string> SetWebhookAsync()
         {
             try
             {
                 var tunnel = await _ngrokService.GetSecureTunnel();
-                await _client.SetWebhookAsync($"{tunnel.PublicUrl}/api/bot");
+                TelegramService.SetWebhook(_client, tunnel.PublicUrl);
             }
             catch (Exception ex)
             {
