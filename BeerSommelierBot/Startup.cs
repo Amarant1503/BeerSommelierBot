@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using BeerSommelierBot.Options;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -31,7 +32,7 @@ namespace BeerSommelierBot
         {
             services.AddMvc();
 
-            services.Configure<ApplicationOptions>(Configuration.GetSection("Application"));
+            services.Configure<TelegramOptions>(Configuration.GetSection("Telegram"));
             services.Configure<ProxyOptions>(Configuration.GetSection("Proxy"));
         }
 
@@ -42,6 +43,11 @@ namespace BeerSommelierBot
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            });
 
             app.UseMvc();
         }

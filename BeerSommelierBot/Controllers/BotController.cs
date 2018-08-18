@@ -16,17 +16,17 @@ namespace BeerSommelierBot.Controllers
     [Route("api/[controller]")]
     public class BotController : Controller
     {
-        private ApplicationOptions _appOptions { get; }
+        private TelegramOptions _tgOptions { get; }
         private ProxyOptions _proxyOptions { get; }
         private TelegramBotClient client { get; }
 
-        public BotController(IOptions<ApplicationOptions> appOptions, IOptions<ProxyOptions> proxyOptions)
+        public BotController(IOptions<TelegramOptions> tgOptions, IOptions<ProxyOptions> proxyOptions)
         {
-            _appOptions = appOptions.Value;
+            _tgOptions = tgOptions.Value;
             _proxyOptions = proxyOptions.Value;
             var proxy = new HttpToSocks5Proxy(_proxyOptions.Host, _proxyOptions.Port, _proxyOptions.User, _proxyOptions.Password);
             proxy.ResolveHostnamesLocally = true;
-            client = new TelegramBotClient(_appOptions.TelegramToken, proxy);
+            client = new TelegramBotClient(_tgOptions.Token, proxy);
         }
 
         // GET api/values
@@ -52,7 +52,7 @@ namespace BeerSommelierBot.Controllers
         {
             try
             {
-                await client.SetWebhookAsync($"{ _appOptions.NgrokWebhook}/api/bot");
+                await client.SetWebhookAsync($"{ _tgOptions.WebhookUrl}");
             }
             catch (Exception ex)
             {

@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace BeerSommelierBot.Options
 {
-    public class ApplicationOptions
+    public class TelegramOptions
     {
-        public string TelegramToken { get; set; }
-        public string NgrokWebhook { get; set; }
+        public string Token { get; set; }
+        public string WebhookUrl { get; set; }
     }
 }
