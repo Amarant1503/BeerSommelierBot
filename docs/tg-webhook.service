@@ -1,0 +1,12 @@
+[Unit]
+Description=Establish telegram webhook
+After=beer-sommelier-tg-bot.service
+
+[Service]
+ExecStart=/home/amarant/tg-webhook.sh
+TimeoutStartSec=25s
+RestartSec=15s
+User=amarant
+
+[Install]
+WantedBy=multi-user.target
