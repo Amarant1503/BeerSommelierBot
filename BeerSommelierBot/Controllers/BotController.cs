@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using BeerSommelierBot.Options;
+﻿using BeerSommelierBot.Options;
+using BeerSommelierBot.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MihaZupan;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -16,24 +15,19 @@ namespace BeerSommelierBot.Controllers
     [Route("api/[controller]")]
     public class BotController : Controller
     {
-        private ApplicationOptions _appOptions { get; }
+        private TelegramOptions _tgOptions { get; }
         private ProxyOptions _proxyOptions { get; }
-        private TelegramBotClient client { get; }
+        private TelegramBotClient _client { get; }
+        private NgrokService _ngrokService { get; }
 
-        public BotController(IOptions<ApplicationOptions> appOptions, IOptions<ProxyOptions> proxyOptions)
+        public BotController(IOptions<TelegramOptions> tgOptions, IOptions<ProxyOptions> proxyOptions, IOptions<NgrokOptions> ngrokOptions)
         {
-            _appOptions = appOptions.Value;
+            _ngrokService = new NgrokService(ngrokOptions.Value.LocalUrl);
+            _tgOptions = tgOptions.Value;
             _proxyOptions = proxyOptions.Value;
             var proxy = new HttpToSocks5Proxy(_proxyOptions.Host, _proxyOptions.Port, _proxyOptions.User, _proxyOptions.Password);
             proxy.ResolveHostnamesLocally = true;
-            client = new TelegramBotClient(_appOptions.TelegramToken, proxy);
-        }
-
-        // GET api/values
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
+            _client = new TelegramBotClient(_tgOptions.Token, proxy);
         }
 
         [HttpPost]
@@ -43,23 +37,35 @@ namespace BeerSommelierBot.Controllers
             var message = update.Message;
             if (message?.Type == MessageType.Text)
             {
-                await client.SendTextMessageAsync(message.Chat.Id, message.Text);
+                await _client.SendTextMessageAsync(message.Chat.Id, message.Text);
             }
         }
 
+        /// <summary>
+        /// manual webhook set
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("telegram")]
-        public async Task<string> TestApiAsync()
+        public async Task<string> SetWebhookAsync()
         {
             try
             {
-                await client.SetWebhookAsync($"{ _appOptions.NgrokWebhook}/api/bot");
+                var tunnel = await _ngrokService.GetSecureTunnel();
+                TelegramService.SetWebhook(_client, tunnel.PublicUrl);
             }
             catch (Exception ex)
             {
-
+                throw new ApplicationException($"cannot establish Telegram webhook via Ngrok, error details: ", ex);
             }
-            var me = await client.GetMeAsync();
+
+            var me = await _client.GetMeAsync();
             return ($"Hello! My name is {me.FirstName}");
+        }
+
+        [HttpGet("healthcheck")]
+        public async Task<IActionResult> TestBotAvailabilityAsync()
+        {
+            return Ok("Success!");
         }
     }
 }

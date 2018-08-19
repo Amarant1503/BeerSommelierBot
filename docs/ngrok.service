@@ -1,0 +1,16 @@
+[Unit]
+Description=Share local port(s) with ngrok
+After=syslog.target network.target
+
+[Service]
+PrivateTmp=true
+Type=simple
+Restart=always
+RestartSec=30
+StandardOutput=null
+StandardError=null
+ExecStart=/home/amarant/ngrok start secure
+User=amarant
+
+[Install]
+WantedBy=multi-user.target
